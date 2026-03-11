@@ -9,20 +9,26 @@ import { login, signup, signInWithGoogle } from '@/app/auth/actions'
 import { toast } from 'sonner'
 import { Loader2, KeyRound, Mail } from 'lucide-react'
 
+import { useSearchParams } from 'next/navigation'
+import { useEffect } from 'react'
+
 export default function LoginPage() {
     const [isLoading, setIsLoading] = useState(false)
     const [mode, setMode] = useState<'login' | 'signup'>('login')
+    const searchParams = useSearchParams()
+    const errorMsg = searchParams.get('error')
+
+    useEffect(() => {
+        if (errorMsg) {
+            toast.error(errorMsg, { duration: 5000 })
+        }
+    }, [errorMsg])
 
     const handleGoogleLogin = async () => {
         setIsLoading(true)
-        try {
-            const result = await signInWithGoogle()
-            if (result?.error) {
-                toast.error(result.error)
-            }
-        } catch (error) {
-            toast.error("Gagal terhubung ke Google")
-        } finally {
+        const result = await signInWithGoogle()
+        if (result?.error) {
+            toast.error(result.error)
             setIsLoading(false)
         }
     }
@@ -32,34 +38,30 @@ export default function LoginPage() {
         setIsLoading(true)
         const formData = new FormData(e.currentTarget)
         
-        try {
-            if (mode === 'login') {
-                const result = await login(formData)
-                if (result?.error) {
-                    toast.error(result.error)
-                }
-            } else {
-                const result = await signup(formData)
-                if (result?.error) {
-                    toast.error(result.error)
-                } else if (result?.success) {
-                    toast.success(result.success)
-                }
+        if (mode === 'login') {
+            const result = await login(formData)
+            if (result?.error) {
+                toast.error(result.error)
+                setIsLoading(false)
             }
-        } catch (error) {
-            toast.error("Terjadi kesalahan sistem")
-        } finally {
+        } else {
+            const result = await signup(formData)
             setIsLoading(false)
+            if (result?.error) {
+                toast.error(result.error)
+            } else if (result?.success) {
+                toast.success(result.success)
+            }
         }
     }
 
     return (
         <div className="flex items-center justify-center min-h-[80vh] px-4">
             <Card className="w-full max-w-md shadow-2xl border-none bg-white rounded-3xl overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700">
-                <div className="h-2 bg-blue-600 w-full" />
+                <div className="h-2 bg-primary w-full" />
                 <CardHeader className="space-y-3 pt-10 pb-6 text-center">
-                    <div className="mx-auto w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mb-2">
-                        <KeyRound className="h-6 w-6 text-blue-600" />
+                    <div className="mx-auto w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mb-2">
+                        <KeyRound className="h-6 w-6 text-primary" />
                     </div>
                     <CardTitle className="text-3xl font-black tracking-tight text-neutral-900">
                         {mode === 'login' ? 'Selamat Datang' : 'Buat Akun'}
@@ -82,7 +84,7 @@ export default function LoginPage() {
                                     type="email" 
                                     placeholder="nama@email.com" 
                                     required 
-                                    className="pl-11 h-12 rounded-xl border-neutral-200 focus:ring-blue-500 focus:border-blue-500 transition-all font-medium"
+                                    className="pl-11 h-12 rounded-xl border-neutral-200 focus:ring-primary focus:border-primary transition-all font-medium"
                                 />
                             </div>
                         </div>
@@ -95,7 +97,7 @@ export default function LoginPage() {
                                     name="password" 
                                     type="password" 
                                     required 
-                                    className="pl-11 h-12 rounded-xl border-neutral-200 focus:ring-blue-500 focus:border-blue-500 transition-all font-medium"
+                                    className="pl-11 h-12 rounded-xl border-neutral-200 focus:ring-primary focus:border-primary transition-all font-medium"
                                 />
                             </div>
                         </div>
@@ -104,7 +106,7 @@ export default function LoginPage() {
                         <Button 
                             type="submit" 
                             disabled={isLoading}
-                            className="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold shadow-xl shadow-blue-100 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                            className="w-full h-14 rounded-2xl bg-primary hover:opacity-90 text-primary-foreground text-lg font-black shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
                         >
                             {isLoading ? (
                                 <>
@@ -146,7 +148,7 @@ export default function LoginPage() {
                             <button 
                                 type="button" 
                                 onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
-                                className="ml-1.5 text-blue-600 font-bold hover:underline"
+                                className="ml-1.5 text-primary-foreground font-black hover:underline px-2 py-0.5 bg-primary/20 rounded-md"
                             >
                                 {mode === 'login' ? 'Daftar di sini' : 'Masuk di sini'}
                             </button>

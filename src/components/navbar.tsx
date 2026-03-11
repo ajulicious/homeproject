@@ -29,12 +29,7 @@ export function Navbar() {
     }, [supabase])
 
     const handleSignOut = async () => {
-        try {
-            await signOut()
-            toast.success("Berhasil keluar")
-        } catch (error) {
-            toast.error("Gagal keluar")
-        }
+        await signOut()
     }
     return (
         <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -52,28 +47,28 @@ export function Navbar() {
                     {user && (
                         <>
                             <Link href="/planner">
-                                <Button variant="ghost" size="sm" className="gap-1.5 h-9 rounded-full text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                                <Button variant="ghost" size="sm" className="gap-1.5 h-9 rounded-full text-neutral-700 hover:text-black hover:bg-primary/20">
                                     <CalendarClock className="h-4 w-4" />
                                     <span className="font-semibold hidden sm:inline-block">Planner</span>
                                 </Button>
                             </Link>
                             <Link href="/gallery">
-                                <Button variant="ghost" size="sm" className="gap-1.5 h-9 rounded-full text-violet-600 hover:text-violet-700 hover:bg-violet-50">
+                                <Button variant="ghost" size="sm" className="gap-1.5 h-9 rounded-full text-neutral-700 hover:text-black hover:bg-primary/20">
                                     <Image className="h-4 w-4" />
                                     <span className="font-semibold hidden sm:inline-block">Galeri</span>
                                 </Button>
                             </Link>
                             <Link href="/expenses">
-                                <Button variant="outline" size="sm" className="gap-1.5 h-9 rounded-full shadow-sm">
-                                    <ReceiptText className="h-4 w-4 text-emerald-600" />
-                                    <span className="font-semibold text-emerald-700 hidden sm:inline-block">Pengeluaran</span>
+                                <Button variant="outline" size="sm" className="gap-1.5 h-9 rounded-full shadow-sm border-primary/50 bg-primary/5 hover:bg-primary/20">
+                                    <ReceiptText className="h-4 w-4 text-neutral-900" />
+                                    <span className="font-semibold text-neutral-900 hidden sm:inline-block">Pengeluaran</span>
                                 </Button>
                             </Link>
                             <Button 
                                 variant="ghost" 
                                 size="sm" 
                                 onClick={handleSignOut}
-                                className="gap-1.5 h-9 rounded-full text-red-600 hover:text-red-700 hover:bg-red-50 ml-1"
+                                className="gap-1.5 h-9 rounded-full text-neutral-500 hover:text-red-600 hover:bg-red-50 ml-1"
                             >
                                 <LogOut className="h-4 w-4" />
                                 <span className="font-semibold hidden sm:inline-block">Keluar</span>
@@ -82,7 +77,7 @@ export function Navbar() {
                     )}
                     {!user && !loading && (
                         <Link href="/login">
-                            <Button size="sm" className="h-9 px-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold transition-all">
+                            <Button size="sm" className="h-9 px-6 rounded-full bg-primary text-primary-foreground font-bold shadow-sm hover:opacity-90 transition-all">
                                 Login
                             </Button>
                         </Link>

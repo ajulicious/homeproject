@@ -30,6 +30,9 @@ export function ExpenseForm({ onExpenseAdded }: { onExpenseAdded?: () => void })
         toast.info('Menyimpan data pengeluaran...')
 
         try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) throw new Error("Anda harus login untuk mencatat pengeluaran")
+
             let receipt_image_url = null
 
             // 1. Upload resi jika ada
@@ -39,16 +42,17 @@ export function ExpenseForm({ onExpenseAdded }: { onExpenseAdded?: () => void })
                 }
                 const fileExt = receiptFile.name.split('.').pop()
                 const fileName = `receipt-${Date.now()}-${Math.random()}.${fileExt}`
+                const filePath = `${user.id}/${fileName}`
 
                 const { error: uploadError } = await supabase.storage
                     .from('receipts')
-                    .upload(fileName, receiptFile)
+                    .upload(filePath, receiptFile)
 
                 if (uploadError) throw uploadError
 
                 const { data } = supabase.storage
                     .from('receipts')
-                    .getPublicUrl(fileName)
+                    .getPublicUrl(filePath)
 
                 receipt_image_url = data.publicUrl
             }
@@ -63,7 +67,8 @@ export function ExpenseForm({ onExpenseAdded }: { onExpenseAdded?: () => void })
                     amount: numericAmount,
                     description,
                     receipt_image_url,
-                    created_at: new Date().toISOString()
+                    created_at: new Date().toISOString(),
+                    user_id: user.id
                 } as any)
 
             if (dbError) throw dbError

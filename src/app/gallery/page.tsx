@@ -28,17 +28,21 @@ export default function GalleryPage() {
         const fetchPhotos = async () => {
             setLoading(true)
             try {
+                const { data: { user } } = await supabase.auth.getUser()
+                if (!user) return
+
                 const items: PhotoItem[] = []
 
                 // 1. Fetch proof images from progress_reports
                 const { data: reports } = await supabase
                     .from('progress_reports')
                     .select('id, task_id, week, proof_image_url, updated_at')
+                    .eq('user_id', user.id)
                     .not('proof_image_url', 'is', null)
                     .order('updated_at', { ascending: false })
 
-                const { data: tasks } = await supabase.from('tasks').select('id, title, category_id')
-                const { data: categories } = await supabase.from('categories').select('id, title')
+                const { data: tasks } = await supabase.from('tasks').select('id, title, category_id').eq('user_id', user.id)
+                const { data: categories } = await supabase.from('categories').select('id, title').eq('user_id', user.id)
 
                 const taskMap: Record<string, { title: string; categoryTitle: string }> = {}
                 if (tasks && categories) {
@@ -68,6 +72,7 @@ export default function GalleryPage() {
                 const { data: expenses } = await supabase
                     .from('expenses')
                     .select('id, description, type, receipt_image_url, created_at')
+                    .eq('user_id', user.id)
                     .not('receipt_image_url', 'is', null)
                     .order('created_at', { ascending: false })
 
@@ -112,7 +117,7 @@ export default function GalleryPage() {
                     </div>
                     <h1 className="text-4xl md:text-5xl font-black tracking-tight text-neutral-900 leading-tight">
                         Galeri
-                        <span className="block text-transparent bg-clip-text bg-gradient-to-r from-violet-500 to-purple-400">
+                        <span className="block text-primary">
                             Bukti Kerja
                         </span>
                     </h1>

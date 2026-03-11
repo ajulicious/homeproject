@@ -18,7 +18,14 @@ export default function ExpensesPage() {
     useEffect(() => {
         const fetchTotals = async () => {
             const supabase = createSupabaseClient()
-            const { data } = await supabase.from('expenses').select('type, amount')
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return
+
+            const { data } = await supabase
+                .from('expenses')
+                .select('type, amount')
+                .eq('user_id', user.id)
+
             if (data) {
                 const materials = (data as { type: string, amount: number }[]).filter(e => e.type === 'material_purchase').reduce((acc, curr) => acc + Number(curr.amount), 0)
                 const labors = (data as { type: string, amount: number }[]).filter(e => e.type === 'labor_cost').reduce((acc, curr) => acc + Number(curr.amount), 0)
@@ -64,13 +71,13 @@ export default function ExpensesPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* This section will contain the total metrics */}
-                <Card className="border-none shadow-md bg-gradient-to-br from-amber-500 to-amber-600 text-white">
+                <Card className="border-none shadow-md bg-primary text-primary-foreground">
                     <CardHeader className="pb-2">
-                        <CardDescription className="text-amber-50 font-medium">Total Pengeluaran</CardDescription>
-                        <CardTitle className="text-3xl font-bold">{formatRupiah(totalMaterial + totalLabor)}</CardTitle>
+                        <CardDescription className="text-black/60 font-medium">Total Pengeluaran</CardDescription>
+                        <CardTitle className="text-3xl font-black">{formatRupiah(totalMaterial + totalLabor)}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-sm font-medium text-amber-100">Kumulatif seluruh biaya</div>
+                        <div className="text-sm font-bold text-black/50">Kumulatif seluruh biaya</div>
                     </CardContent>
                 </Card>
 

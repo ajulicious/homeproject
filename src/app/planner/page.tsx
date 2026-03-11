@@ -35,9 +35,13 @@ export default function PlannerPage() {
 
     const fetchData = async () => {
         try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return
+
             const { data: categoriesData, error: catError } = await supabase
                 .from('categories')
                 .select('*')
+                .eq('user_id', user.id)
                 .order('order_index', { ascending: true })
 
             if (catError) throw catError
@@ -46,6 +50,7 @@ export default function PlannerPage() {
             const { data: tasksData, error: taskError } = await supabase
                 .from('tasks')
                 .select('*')
+                .eq('user_id', user.id)
 
             if (taskError) throw taskError
             const tasks = tasksData as Task[]
@@ -121,6 +126,9 @@ export default function PlannerPage() {
 
         setIsSubmitting(true)
         try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) throw new Error("Unauthorized")
+
             if (categoryModal.data?.id) {
                 const { error } = await supabase
                     .from('categories')
@@ -133,7 +141,7 @@ export default function PlannerPage() {
                 const { error } = await supabase
                     .from('categories')
                     // @ts-ignore
-                    .insert({ title, order_index: data.length })
+                    .insert({ title, order_index: data.length, user_id: user.id })
                 if (error) throw error
                 toast.success("Kategori baru berhasil ditambahkan")
             }
@@ -153,6 +161,9 @@ export default function PlannerPage() {
 
         setIsSubmitting(true)
         try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) throw new Error("Unauthorized")
+
             if (taskModal.data?.id) {
                 const { error } = await supabase
                     .from('tasks')
@@ -168,7 +179,8 @@ export default function PlannerPage() {
                     .insert({
                         title,
                         category_id: taskModal.categoryId,
-                        status_type: 'checkbox' // default
+                        status_type: 'checkbox', // default
+                        user_id: user.id
                     })
                 if (error) throw error
                 toast.success("Pekerjaan baru berhasil ditambahkan")

@@ -46,13 +46,22 @@ export async function signOut() {
 
 export async function signInWithGoogle() {
   const supabase = await createClient()
-  const redirectUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`
+  
+  // Gunakan URL Vercel HANYA jika memang di production, 
+  // jika di local biarkan menggunakan URL yang sedang diakses.
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  const redirectUrl = `${siteUrl}/auth/callback`
+  
   console.log('Initiating Google OAuth with redirect:', redirectUrl)
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
       redirectTo: redirectUrl,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
     },
   })
 

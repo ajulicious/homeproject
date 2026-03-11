@@ -8,10 +8,19 @@ export async function updateProgressStatus(
 ) {
     const supabase = createSupabaseClient()
 
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
     const { data, error } = await supabase
         .from('progress_reports')
         .upsert(
-            { task_id: taskId, week, status, updated_at: new Date().toISOString() } as any,
+            { 
+                task_id: taskId, 
+                week, 
+                status, 
+                updated_at: new Date().toISOString(),
+                user_id: user.id
+            } as any,
             { onConflict: 'task_id,week' }
         )
         .select()
@@ -30,10 +39,13 @@ export async function uploadProofImage(
 ) {
     const supabase = createSupabaseClient()
 
-    // 1. Upload file to Storage
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    // 1. Upload file to Storage (using user.id as folder)
     const fileExt = fileUri.name.split('.').pop()
     const fileName = `${taskId}-w${week}-${Math.random()}.${fileExt}`
-    const filePath = `${fileName}`
+    const filePath = `${user.id}/${fileName}`
 
     const { error: uploadError } = await supabase.storage
         .from('work_proofs')
@@ -60,7 +72,8 @@ export async function uploadProofImage(
                 task_id: taskId,
                 week,
                 proof_image_url: publicUrlData.publicUrl,
-                updated_at: new Date().toISOString()
+                updated_at: new Date().toISOString(),
+                user_id: user.id
             } as any,
             { onConflict: 'task_id,week' }
         )
@@ -81,6 +94,9 @@ export async function removeProofImage(
 ) {
     const supabase = createSupabaseClient()
 
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
     // 1. Delete from Storage
     try {
         // Extract filename from URL (assumes basic supabase format)
@@ -90,7 +106,7 @@ export async function removeProofImage(
         if (fileName) {
             await supabase.storage
                 .from('work_proofs')
-                .remove([fileName])
+                .remove([`${user.id}/${fileName}`])
         }
     } catch (e) {
         console.error("Failed to delete actual file from storage, continuing DB nullification:", e)

@@ -30,10 +30,14 @@ export function ProgressMatrix() {
 
     const fetchData = async () => {
         try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return
+
             // 1. Fetch Categories
             const { data: categoriesData, error: catError } = await supabase
                 .from('categories')
                 .select('*')
+                .eq('user_id', user.id)
                 .order('order_index', { ascending: true })
 
             if (catError) throw catError
@@ -43,6 +47,7 @@ export function ProgressMatrix() {
             const { data: tasksData, error: taskError } = await supabase
                 .from('tasks')
                 .select('*')
+                .eq('user_id', user.id)
 
             if (taskError) throw taskError
             const tasks = tasksData as Task[]
@@ -51,6 +56,7 @@ export function ProgressMatrix() {
             const { data: reportsData, error: reportError } = await supabase
                 .from('progress_reports')
                 .select('*')
+                .eq('user_id', user.id)
 
             if (reportError) throw reportError
             const reports = reportsData as ProgressReport[]
@@ -170,15 +176,18 @@ export function ProgressMatrix() {
         if (!selectedTask) return
         setIsUpdating(true)
         try {
-            const supabaseClient = createSupabaseClient()
-            const { error } = await supabaseClient
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) throw new Error("Unauthorized")
+
+            const { error } = await supabase
                 .from('progress_reports')
                 .upsert(
                     {
                         task_id: selectedTask.task.id,
                         week: selectedTask.week,
                         notes,
-                        updated_at: new Date().toISOString()
+                        updated_at: new Date().toISOString(),
+                        user_id: user.id
                     } as any,
                     { onConflict: 'task_id,week' }
                 )

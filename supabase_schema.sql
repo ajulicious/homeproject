@@ -42,17 +42,31 @@ CREATE TABLE expenses (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Enable Row Level Security (RLS) but set policies to allow everything for public access (for now, or you can add auth later)
+-- 1. Tambah kolom user_id ke semua tabel utama (Jalankan ini di SQL Editor)
+ALTER TABLE categories ADD COLUMN user_id UUID REFERENCES auth.users(id) DEFAULT auth.uid();
+ALTER TABLE tasks ADD COLUMN user_id UUID REFERENCES auth.users(id) DEFAULT auth.uid();
+ALTER TABLE progress_reports ADD COLUMN user_id UUID REFERENCES auth.users(id) DEFAULT auth.uid();
+ALTER TABLE expenses ADD COLUMN user_id UUID REFERENCES auth.users(id) DEFAULT auth.uid();
+
+-- 2. Berikan semua data yang sudah ada ke user spesifik (Contoh)
+-- UPDATE categories SET user_id = 'UUID_ADDRESS' WHERE user_id IS NULL;
+
+-- 3. Aktifkan Row Level Security (RLS)
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE progress_reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
 
--- Allow all operations for public (since there's no complex Auth yet)
-CREATE POLICY "Allow public read/write categories" ON categories FOR ALL USING (true);
-CREATE POLICY "Allow public read/write tasks" ON tasks FOR ALL USING (true);
-CREATE POLICY "Allow public read/write progress_reports" ON progress_reports FOR ALL USING (true);
-CREATE POLICY "Allow public read/write expenses" ON expenses FOR ALL USING (true);
+-- 4. Kebijakan Keamanan (Policies)
+CREATE POLICY "Users can only manage their own categories" ON categories FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can only manage their own tasks" ON tasks FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can only manage their own progress_reports" ON progress_reports FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can only manage their own expenses" ON expenses FOR ALL USING (auth.uid() = user_id);
+
+-- 5. Storage Security (Bucket Policies)
+-- Ganti kebijakan "Allow public access" dengan yang lebih ketat:
+-- Policy untuk bucket 'work_proofs' & 'receipts':
+-- CREATE POLICY "User Storage Access" ON storage.objects FOR ALL USING (bucket_id = 'bucket_name' AND (auth.uid())::text = (storage.foldername(name))[1]);
 
 -- Enable Realtime
 alter publication supabase_realtime add table progress_reports;
