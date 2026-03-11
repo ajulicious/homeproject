@@ -10,7 +10,10 @@ export async function GET(request: Request) {
   // if "next" is in search params, use it as the redirection URL
   const next = searchParams.get('next') ?? '/'
 
+  console.log('Auth Callback triggered:', request.url)
+  
   if (code) {
+    console.log('Code found, attempting exchange...')
     const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,28 +24,34 @@ export async function GET(request: Request) {
             return cookieStore.getAll()
           },
           setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options)
+              )
+            } catch (error) {
+              console.error('Error setting cookies in callback:', error)
+            }
           },
         },
       }
     )
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
-        const forwardedHost = request.headers.get('x-forwarded-host') // i.e. localhost:3000
+        console.log('Exchange successful, redirecting...')
+        const forwardedHost = request.headers.get('x-forwarded-host')
         const isLocalEnv = process.env.NODE_ENV === 'development'
         if (isLocalEnv) {
-          // we can be sure that origin is the right address for localhost
           return NextResponse.redirect(`${origin}${next}`)
         } else if (forwardedHost) {
           return NextResponse.redirect(`https://${forwardedHost}${next}`)
         } else {
           return NextResponse.redirect(`${origin}${next}`)
         }
+    } else {
+      console.error('Auth code exchange error details:', JSON.stringify(error, null, 2))
     }
   }
 
-  // return the user to an error page with instructions
+  console.error('Final failure: Missing code or exchange failed. Redirecting to error page.')
   return NextResponse.redirect(`${origin}/auth/auth-code-error`)
 }
