@@ -12,7 +12,9 @@ import { Loader2, KeyRound, Mail } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import { useEffect } from 'react'
 
-export default function LoginPage() {
+import { Suspense } from 'react'
+
+function LoginContent() {
     const [isLoading, setIsLoading] = useState(false)
     const [mode, setMode] = useState<'login' | 'signup'>('login')
     const searchParams = useSearchParams()
@@ -157,5 +159,17 @@ export default function LoginPage() {
                 </form>
             </Card>
         </div>
+    )
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[80vh]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        }>
+            <LoginContent />
+        </Suspense>
     )
 }
