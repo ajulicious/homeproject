@@ -3,6 +3,7 @@
 // But for now let's create a server-side actions file.
 import { createClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 
 export async function login(formData: FormData) {
   const email = formData.get('email') as string
@@ -46,13 +47,12 @@ export async function signOut() {
 
 export async function signInWithGoogle() {
   const supabase = await createClient()
+  const headerList = await headers()
+  const host = headerList.get('host')
+  const protocol = host?.includes('localhost') ? 'http' : 'https'
   
-  // Gunakan URL Vercel HANYA jika memang di production, 
-  // jika di local biarkan menggunakan URL yang sedang diakses.
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  const siteUrl = `${protocol}://${host}`
   const redirectUrl = `${siteUrl}/auth/callback`
-  
-  console.log('Initiating Google OAuth with redirect:', redirectUrl)
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
